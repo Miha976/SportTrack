@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import date, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..models import CATEGORIES, Goal, Program, SleepEntry, WorkoutSession
@@ -37,6 +37,9 @@ def sleep_between(db: Session, start: date, end: date) -> list[SleepEntry]:
 
 
 # ------------------------------------------------------------------ charge
+MIN_HISTORY_DAYS = 27  # 1re séance il y a ≥ 27 jours → 28 jours couverts
+
+
 def load_series(db: Session, days: int = 56, today: date | None = None) -> list[dict]:
     """Charge quotidienne + aiguë (7 j) + chronique (moy. hebdo sur 28 j) + ratio ACWR."""
     today = today or date.today()
@@ -44,6 +47,9 @@ def load_series(db: Session, days: int = 56, today: date | None = None) -> list[
     daily: dict[date, float] = defaultdict(float)
     for s in sessions_between(db, start, today):
         daily[s.date] += session_load(s)
+    # Le ratio n'a de sens qu'avec 4 semaines d'historique : avant, la charge chronique
+    # est sous-estimée (ex. tout dans la 1re semaine → ratio mécaniquement égal à 4).
+    first = db.scalar(select(func.min(WorkoutSession.date)))
 
     out = []
     for i in range(days):
@@ -55,7 +61,8 @@ def load_series(db: Session, days: int = 56, today: date | None = None) -> list[
             "load": round(daily[d], 1),
             "acute": round(acute, 1),
             "chronic": round(chronic, 1),
-            "acwr": round(acute / chronic, 2) if chronic > 0 else None,
+            "acwr": round(acute / chronic, 2)
+            if chronic > 0 and first is not None and (d - first).days >= MIN_HISTORY_DAYS else None,
         })
     return out
 

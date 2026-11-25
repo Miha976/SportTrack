@@ -15,10 +15,16 @@ export const sessionsBetween = (a: string, b: string) => S().workouts.filter((w)
 export const sleepBetween = (a: string, b: string) =>
   S().sleep.filter((n) => n.date >= a && n.date <= b).sort((x, y) => x.date.localeCompare(y.date))
 
+/** 1re séance il y a ≥ 27 jours → 28 jours couverts. */
+export const MIN_HISTORY_DAYS = 27
+
 export function loadSeries(days = 56, today = todayISO()): LoadPoint[] {
   const daily = new Map<string, number>()
   for (const w of sessionsBetween(addDays(today, -(days + 27)), today)) daily.set(w.date, (daily.get(w.date) ?? 0) + sessionLoad(w))
   const at = (d: string) => daily.get(d) ?? 0
+  // Le ratio n'a de sens qu'avec 4 semaines d'historique (sinon charge chronique sous-estimée).
+  const first = S().workouts.reduce<string | null>((m, w) => (m === null || w.date < m ? w.date : m), null)
+  const enoughHistory = (d: string) => first !== null && addDays(first, MIN_HISTORY_DAYS) <= d
   return Array.from({ length: days }, (_, i) => {
     const d = addDays(today, -(days - 1 - i))
     let acute = 0, chronic = 0
@@ -28,7 +34,7 @@ export function loadSeries(days = 56, today = todayISO()): LoadPoint[] {
       chronic += v
     }
     chronic /= 4
-    return { date: d, load: r1(at(d)), acute: r1(acute), chronic: r1(chronic), acwr: chronic > 0 ? r2(acute / chronic) : null }
+    return { date: d, load: r1(at(d)), acute: r1(acute), chronic: r1(chronic), acwr: chronic > 0 && enoughHistory(d) ? r2(acute / chronic) : null }
   })
 }
 

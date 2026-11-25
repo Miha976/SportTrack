@@ -8,7 +8,7 @@ const ZONE_TIPS: Record<string, string[]> = {
   optimal: ['Charge bien dosée. Garde 1 séance de récup par semaine et 7 h 30 – 9 h de sommeil.'],
   vigilance: ['Charge en hausse rapide : privilégie technique et mobilité 1-2 jours.', 'Soigne le sommeil et l’hydratation.'],
   risque: ['Hausse de charge brutale : réduis l’intensité cette semaine (pas de fractionné), récupération active.', 'Douleur persistante → consulte un professionnel de santé.'],
-  inconnu: ['Pas assez d’historique : enregistre tes séances avec le RPE pour activer le suivi de charge (≈ 4 semaines).'],
+  inconnu: ['Suivi de charge en rodage : le ratio s’affiche après 4 semaines de séances enregistrées (avec le RPE). En attendant, augmente ton volume progressivement.'],
 }
 
 export function useRecoveryViewModel() {

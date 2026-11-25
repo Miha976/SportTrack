@@ -44,7 +44,7 @@ npm run dev:mobile      # test sur le réseau local (ouvre l'URL « Network » s
 npm run build:mobile    # → dist-mobile/ : un seul index.html + manifest + service worker
 ```
 
-**Mise en ligne (GitHub Pages)** : automatique. Chaque push sur `main` lance `.github/workflows/pages.yml`, qui construit `dist-mobile/` et le publie sur https://miha976.github.io/SportTrack/. Ouvre l'URL sur ton téléphone, puis :
+**Mise en ligne (GitHub Pages)** : Pages sert la racine de `main` (`index.html`, `sw.js`, manifest et icônes sont le build de la version téléphone, avec `.nojekyll`). Quand `frontend/` change, `.github/workflows/pages.yml` reconstruit et remet à jour ces fichiers automatiquement. Adresse : https://miha976.github.io/SportTrack/. Ouvre l'URL sur ton téléphone, puis :
 - Android (Chrome) : menu ⋮ → *Ajouter à l'écran d'accueil* / *Installer l'application* ;
 - iPhone (Safari) : bouton Partager → *Sur l'écran d'accueil*.
 

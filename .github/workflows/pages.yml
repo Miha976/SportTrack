@@ -1,26 +1,24 @@
-# Construit la version téléphone (sans serveur) et la publie sur GitHub Pages à chaque push sur main.
-name: Déployer l'app téléphone
+# GitHub Pages sert la racine de la branche main (Settings → Pages → Deploy from a branch).
+# Ce workflow reconstruit la version téléphone quand le frontend change et met à jour
+# les fichiers servis à la racine (index.html, sw.js, manifest, icônes).
+name: Reconstruire l'app téléphone
 
 on:
   push:
     branches: [main]
+    paths: ['frontend/**']
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: pages-build
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,19 +26,15 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
-      - run: npm run build:mobile
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: frontend/dist-mobile
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - run: npm ci && npm run build:mobile
+        working-directory: frontend
+      - name: Copier le build à la racine
+        run: |
+          cp frontend/dist-mobile/{index.html,manifest.webmanifest,sw.js,icon-192.png,icon-512.png,favicon.svg} .
+          touch .nojekyll
+      - name: Commit si changement
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html manifest.webmanifest sw.js icon-192.png icon-512.png favicon.svg .nojekyll
+          git diff --cached --quiet || (git commit -m "Build app téléphone [skip ci]" && git push)

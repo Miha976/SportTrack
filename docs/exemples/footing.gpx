@@ -1,0 +1,4 @@
+<?xml version="1.0"?><gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1"><trk><type>running</type><trkseg>
+<trkpt lat="48.8566" lon="2.3522"><time>2026-11-20T18:00:00Z</time><extensions><gpxtpx:TrackPointExtension><gpxtpx:hr>140</gpxtpx:hr></gpxtpx:TrackPointExtension></extensions></trkpt>
+<trkpt lat="48.8666" lon="2.3522"><time>2026-11-20T18:06:00Z</time><extensions><gpxtpx:TrackPointExtension><gpxtpx:hr>150</gpxtpx:hr></gpxtpx:TrackPointExtension></extensions></trkpt>
+<trkpt lat="48.8766" lon="2.3522"><time>2026-11-20T18:12:00Z</time></trkpt></trkseg></trk></gpx>

@@ -127,6 +127,7 @@ class SleepEntry(Base):
     rem_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
     light_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
     awake_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    awakenings: Mapped[int | None] = mapped_column(Integer, nullable=True)  # nombre de réveils nocturnes
     resting_hr: Mapped[int | None] = mapped_column(Integer, nullable=True)
     hrv_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     source: Mapped[str] = mapped_column(String(20), default="manuel")

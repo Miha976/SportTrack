@@ -142,6 +142,7 @@ export interface SleepInput {
   rem_min: number | null
   light_min: number | null
   awake_min: number | null
+  awakenings: number | null
   resting_hr: number | null
   hrv_ms: number | null
 }

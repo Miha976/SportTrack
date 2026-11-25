@@ -189,6 +189,7 @@ SLEEP_ALIASES = {
     "rem_min": ["rem_min", "rem", "paradoxal"],
     "light_min": ["light_min", "light", "leger", "léger"],
     "awake_min": ["awake_min", "awake", "eveil", "éveil"],
+    "awakenings": ["awakenings", "reveils", "réveils", "wake count", "nb_reveils"],
     "resting_hr": ["resting_hr", "fc_repos", "resting heart rate"],
     "hrv_ms": ["hrv_ms", "hrv", "vfc"],
 }
@@ -236,6 +237,6 @@ def parse_sleep_csv(raw: bytes) -> list[dict]:
             "wake_time": _hhmm(get("wake_time")),
             "duration_min": _to_int(get("duration_min")),
             **{k: _to_int(get(k)) for k in
-               ("quality", "deep_min", "rem_min", "light_min", "awake_min", "resting_hr", "hrv_ms")},
+               ("quality", "deep_min", "rem_min", "light_min", "awake_min", "awakenings", "resting_hr", "hrv_ms")},
         })
     return out

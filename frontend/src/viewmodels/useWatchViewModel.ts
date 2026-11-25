@@ -5,8 +5,8 @@ import { saveTextFile } from '../services/local/download'
 import { useCommand } from './useResource'
 
 export const SLEEP_CSV_TEMPLATE =
-  'date,bedtime,wake_time,duration_min,quality,deep_min,rem_min,light_min,awake_min,resting_hr,hrv_ms\n' +
-  '2026-11-24,23:15,07:10,455,4,80,100,250,25,52,68\n'
+  'date,bedtime,wake_time,duration_min,quality,deep_min,rem_min,light_min,awake_min,awakenings,resting_hr,hrv_ms\n' +
+  '2026-11-24,23:15,07:10,455,4,80,100,250,25,1,52,68\n'
 
 export function useWatchViewModel() {
   const cmd = useCommand()

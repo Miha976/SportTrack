@@ -8,7 +8,7 @@ import random
 import sys
 from datetime import date, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import inspect, select, text
 
 from .database import Base, SessionLocal, engine
 from .models import Exercise, Goal, GoalMeasurement, Program, ProgramSession, SleepEntry, WorkoutSession
@@ -43,8 +43,17 @@ EXERCISES = [
 ]
 
 
+def migrate():
+    """Migrations légères pour les bases créées par une version précédente."""
+    cols = {c["name"] for c in inspect(engine).get_columns("sleep_entries")}
+    if "awakenings" not in cols:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE sleep_entries ADD COLUMN awakenings INTEGER"))
+
+
 def init_db():
     Base.metadata.create_all(engine)
+    migrate()
     with SessionLocal() as db:
         if not db.scalar(select(Exercise.id).limit(1)):
             db.add_all(Exercise(name=n, category=c, description=d, default_sets=s,
@@ -87,7 +96,7 @@ def seed_demo():
             dur = random.randint(370, 520)
             db.add(SleepEntry(date=d, duration_min=dur, bedtime=f"{random.choice([22, 23, 23, 0]):02d}:{random.choice([0, 15, 30, 45]):02d}",
                               wake_time="07:30", quality=random.randint(2, 5), deep_min=int(dur * .18),
-                              rem_min=int(dur * .22), light_min=int(dur * .55), awake_min=int(dur * .05),
+                              rem_min=int(dur * .22), light_min=int(dur * .55), awake_min=int(dur * .05), awakenings=random.choice([0, 0, 1, 1, 2, 3]),
                               resting_hr=random.randint(50, 58), hrv_ms=random.randint(55, 80)))
             d += timedelta(days=1)
 

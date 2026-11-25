@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react'
 import { fmtShort, minutesBetween, todayISO } from '../models/dates'
 import type { SleepEntry, SleepInput } from '../models/types'
-import { sleepRepository } from '../services/repositories'
+import { sleepInsights } from '../models/sleepInsights'
+import { addDays } from '../models/dates'
+import { sleepRepository, workoutRepository } from '../services/repositories'
 import { useCommand, useResource } from './useResource'
 
 export const SLEEP_TARGET_H = 8
 
 const emptySleep = (): SleepInput => ({
   date: todayISO(), bedtime: '23:00', wake_time: '07:00', duration_min: 480, quality: 3, deep_min: null,
-  rem_min: null, light_min: null, awake_min: null, resting_hr: null, hrv_ms: null,
+  rem_min: null, light_min: null, awake_min: null, awakenings: null, resting_hr: null, hrv_ms: null,
 })
 
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null)
@@ -16,6 +18,7 @@ const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return (
 
 export function useSleepViewModel() {
   const res = useResource(() => sleepRepository.list(60))
+  const workouts = useResource(() => workoutRepository.list({ start: addDays(todayISO(), -60), limit: 500 }))
   const cmd = useCommand()
   const [editing, setEditing] = useState<SleepInput | null>(null)
 
@@ -47,11 +50,13 @@ export function useSleepViewModel() {
     })),
     [chron],
   )
+  /** Conseils recalculés à chaque saisie. */
+  const insights = useMemo(() => sleepInsights(nights, workouts.data ?? []), [nights, workouts.data])
   const hasStages = chron.some((n) => n.deep_min)
   const hasHrv = chron.some((n) => n.hrv_ms)
 
   return {
-    nights, stats, chartData, hasStages, hasHrv, editing, loading: res.loading, busy: cmd.busy,
+    nights, stats, chartData, insights, hasStages, hasHrv, editing, loading: res.loading, busy: cmd.busy,
     error: res.error ?? cmd.error,
     openCreate: () => setEditing(emptySleep()),
     openEdit: (n: SleepEntry) => { const { id: _i, source: _s, ...form } = n; void _i; void _s; setEditing(form) },
@@ -59,7 +64,7 @@ export function useSleepViewModel() {
       setEditing((e) => {
         if (!e) return e
         const next = { ...e, ...patch }
-        if ((patch.bedtime || patch.wake_time) && next.bedtime && next.wake_time)
+        if ((patch.bedtime || patch.wake_time || 'awake_min' in patch) && next.bedtime && next.wake_time)
           next.duration_min = minutesBetween(next.bedtime, next.wake_time) - (next.awake_min ?? 0)
         return next
       }),

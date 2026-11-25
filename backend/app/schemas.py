@@ -162,6 +162,7 @@ class SleepIn(BaseModel):
     rem_min: int | None = None
     light_min: int | None = None
     awake_min: int | None = None
+    awakenings: int | None = Field(None, ge=0, le=20)
     resting_hr: int | None = None
     hrv_ms: int | None = None
 

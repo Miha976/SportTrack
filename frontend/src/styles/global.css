@@ -262,3 +262,9 @@ input[type=range] { accent-color: var(--accent); width: 100%; }
   .bottom-nav { overflow-x: visible; padding-inline: 2px; }
   .bottom-nav a { flex: 1 1 0; min-width: 0; font-size: 9.5px; padding: 6px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
+
+/* ---------- Conseils sommeil ---------- */
+.insight { border: 1px solid var(--border); border-left: 4px solid var(--c); border-radius: 12px; padding: 12px 14px; background: var(--surface-2); }
+.insight-icon { color: var(--c); display: inline-grid; }
+.insight ul { margin: 0; padding-left: 18px; color: var(--text-2); font-size: 14px; line-height: 1.55; }
+.insight li + li { margin-top: 3px; }

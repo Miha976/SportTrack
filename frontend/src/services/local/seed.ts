@@ -86,7 +86,7 @@ export function demoState(): State {
     sleep.push({
       id: nid(), date: d, duration_min: dur, bedtime: `${pad(pick([22, 23, 23, 0]))}:${pad(pick([0, 15, 30, 45]))}`, wake_time: '07:30',
       quality: int(2, 5), deep_min: Math.trunc(dur * 0.18), rem_min: Math.trunc(dur * 0.22), light_min: Math.trunc(dur * 0.55),
-      awake_min: Math.trunc(dur * 0.05), resting_hr: int(50, 58), hrv_ms: int(55, 80), source: 'demo',
+      awake_min: Math.trunc(dur * 0.05), awakenings: pick([0, 0, 1, 1, 2, 3]), resting_hr: int(50, 58), hrv_ms: int(55, 80), source: 'demo',
     })
   }
 

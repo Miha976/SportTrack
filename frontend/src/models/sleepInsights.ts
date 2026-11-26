@@ -44,17 +44,39 @@ const fromPivot = (v: number) => {
 const h = (min: number) => `${(min / 60).toFixed(1).replace('.', ',')} h`
 const signed = (n: number, unit: string) => `${n > 0 ? '+' : '−'}${Math.abs(Math.round(n))} ${unit}`
 
+/** Une entrée sans type (ancienne donnée) est une nuit. */
+export const isNap = (e: Pick<SleepEntry, 'kind'>) => e.kind === 'nap'
+
 // ---------------------------------------------------------------- moteur
 export function sleepInsights(all: SleepEntry[], workouts: Workout[] = []): SleepInsight[] {
-  const nights = [...all].sort((a, b) => a.date.localeCompare(b.date)).slice(-WINDOW)
-  if (nights.length < MIN_NIGHTS) {
+  const rawNights = all.filter((e) => !isNap(e)).sort((a, b) => a.date.localeCompare(b.date)).slice(-WINDOW)
+  const naps = all.filter(isNap).sort((a, b) => a.date.localeCompare(b.date))
+  if (rawNights.length < MIN_NIGHTS) {
     return [{
       id: 'data', level: 'tip', title: 'Encore quelques nuits à saisir',
       actions: [`Saisis au moins ${MIN_NIGHTS} nuits (coucher, réveil, qualité, réveils) pour obtenir des conseils adaptés.`],
-      evidence: `${nights.length} nuit(s) enregistrée(s)`,
+      evidence: `${rawNights.length} nuit(s) enregistrée(s)`,
     }]
   }
   const out: SleepInsight[] = []
+
+  // 0. Saisie probablement erronée : une « nuit » courte prise en journée
+  const daytime = rawNights.filter((n) => {
+    if (!n.bedtime || n.duration_min >= 180) return false
+    const p = pivot(n.bedtime)
+    return p >= pivot('10:00') || p <= pivot('19:00') // entre 10 h et 19 h
+  })
+  if (daytime.length) {
+    out.push({
+      id: 'misfiled', level: 'alert', title: 'Une « nuit » ressemble à une sieste',
+      actions: ['Dans l’historique, ouvre cette entrée (✏️), choisis « ☕ Sieste » et enregistre.', 'Puis ressaisis la vraie nuit de ce jour avec « Saisir ma nuit ».'],
+      evidence: daytime.map((n) => `${n.date} : ${n.bedtime}, ${n.duration_min} min`).join(' · '),
+    })
+  }
+  // Les entrées suspectes sont écartées des calculs suivants pour ne pas fausser les conseils.
+  const nights = rawNights.filter((n) => !daytime.includes(n))
+  if (nights.length < MIN_NIGHTS) return out
+
   const last7 = nights.slice(-7)
   const avg7 = mean(last7.map((n) => n.duration_min))!
   const wakes = nights.filter((n) => n.wake_time).map((n) => pivot(n.wake_time!))
@@ -71,7 +93,9 @@ export function sleepInsights(all: SleepEntry[], workouts: Workout[] = []): Slee
       actions.push(`Pour te lever vers ${fromPivot(wakeMed)}, vise une extinction des feux vers ${fromPivot(wakeMed - SLEEP_TARGET_MIN - 15)}.`)
     }
     actions.push('Avance ton coucher par paliers de 15 min tous les 2-3 jours plutôt que d’un coup.')
-    if (debt > 5 * 60) actions.push('Pour rattraper sans décaler ton rythme : sieste de 20-30 min avant 15 h, plutôt qu’une grasse matinée.')
+    const napRecent = naps.filter((n) => n.date >= last7[0].date).reduce((a, n) => a + n.duration_min, 0)
+    if (debt > 5 * 60 && !napRecent) actions.push('Pour rattraper sans décaler ton rythme : sieste de 20-30 min avant 15 h, plutôt qu’une grasse matinée.')
+    if (napRecent) actions.push(`Tes siestes (${Math.round(napRecent)} min sur la période) compensent en partie, mais ne remplacent pas une nuit complète.`)
     out.push({
       id: 'duration', level: avg7 < 7 * 60 ? 'alert' : 'tip',
       title: avg7 < 7 * 60 ? 'Tu ne dors pas assez' : 'Encore un peu court pour un sportif',
@@ -194,7 +218,26 @@ export function sleepInsights(all: SleepEntry[], workouts: Workout[] = []): Slee
     })
   }
 
-  // 10. Rien à signaler
+  // 10. Siestes : durée et horaire
+  const recentNaps = naps.filter((n) => n.date >= nights[Math.max(0, nights.length - 7)].date)
+  const longNaps = recentNaps.filter((n) => n.duration_min > 40)
+  const lateNaps = recentNaps.filter((n) => n.bedtime && pivot(n.bedtime) >= pivot('16:00') && pivot(n.bedtime) < pivot('20:00'))
+  if (longNaps.length) {
+    out.push({
+      id: 'nap-long', level: 'tip', title: 'Siestes trop longues',
+      actions: ['Vise 20-30 min : au-delà, tu entres en sommeil profond et le réveil est lourd.', 'Mets une alarme et allonge-toi sans chercher à « bien dormir » : même somnoler récupère.'],
+      evidence: `${longNaps.length} sieste(s) de plus de 40 min (max ${Math.max(...longNaps.map((n) => n.duration_min))} min)`,
+    })
+  }
+  if (lateNaps.length) {
+    out.push({
+      id: 'nap-late', level: 'tip', title: 'Siestes tardives',
+      actions: ['Termine ta sieste avant 15-16 h : plus tard, elle retarde l’endormissement du soir.', 'En fin de journée, préfère une pause calme ou quelques minutes de respiration lente.'],
+      evidence: `${lateNaps.length} sieste(s) commencée(s) après 16 h`,
+    })
+  }
+
+  // 11. Rien à signaler
   if (!out.some((i) => ['duration', 'regularity', 'fragmented', 'quality', 'hrv'].includes(i.id))) {
     out.push({
       id: 'good', level: 'good', title: 'Ton sommeil tient la route',

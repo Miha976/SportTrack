@@ -143,6 +143,7 @@ const ALIASES: Record<string, string[]> = {
   rem_min: ['rem_min', 'rem', 'paradoxal'],
   light_min: ['light_min', 'light', 'leger', 'léger'],
   awake_min: ['awake_min', 'awake', 'eveil', 'éveil'],
+  kind: ['kind', 'type', 'nature'],
   awakenings: ['awakenings', 'reveils', 'réveils', 'wake count', 'nb_reveils'],
   resting_hr: ['resting_hr', 'fc_repos', 'resting heart rate'],
   hrv_ms: ['hrv_ms', 'hrv', 'vfc'],
@@ -175,7 +176,8 @@ export function parseSleepCsv(text: string): SleepInput[] {
     const d = (g('date') ?? '').trim().slice(0, 10)
     const date = d.includes('-') ? d : d.split('/').reverse().join('-')
     return {
-      date, bedtime: toHHMM(g('bedtime')), wake_time: toHHMM(g('wake_time')), duration_min: toInt(g('duration_min')) ?? 0,
+      date, kind: ['nap', 'sieste'].includes((g('kind') ?? '').trim().toLowerCase()) ? 'nap' : 'night',
+      bedtime: toHHMM(g('bedtime')), wake_time: toHHMM(g('wake_time')), duration_min: toInt(g('duration_min')) ?? 0,
       quality: toInt(g('quality')), deep_min: toInt(g('deep_min')), rem_min: toInt(g('rem_min')), light_min: toInt(g('light_min')),
       awake_min: toInt(g('awake_min')), awakenings: toInt(g('awakenings')), resting_hr: toInt(g('resting_hr')), hrv_ms: toInt(g('hrv_ms')),
     }

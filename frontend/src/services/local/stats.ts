@@ -12,8 +12,9 @@ const r2 = (n: number) => Math.round(n * 100) / 100
 
 export const sessionLoad = (w: WorkoutRec) => r1((w.duration_min || 0) * (w.rpe || DEFAULT_RPE[w.category] || 5))
 export const sessionsBetween = (a: string, b: string) => S().workouts.filter((w) => w.date >= a && w.date <= b)
+/** Nuits uniquement : les siestes ne doivent pas fausser durée moyenne, forme du jour et objectifs. */
 export const sleepBetween = (a: string, b: string) =>
-  S().sleep.filter((n) => n.date >= a && n.date <= b).sort((x, y) => x.date.localeCompare(y.date))
+  S().sleep.filter((n) => n.date >= a && n.date <= b && (n.kind ?? 'night') === 'night').sort((x, y) => x.date.localeCompare(y.date))
 
 /** 1re séance il y a ≥ 27 jours → 28 jours couverts. */
 export const MIN_HISTORY_DAYS = 27

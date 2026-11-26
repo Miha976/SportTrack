@@ -154,6 +154,7 @@ class WorkoutOut(WorkoutIn, ORM):
 # ---------- Sommeil ----------
 class SleepIn(BaseModel):
     date: date
+    kind: Literal["night", "nap"] = "night"
     bedtime: str | None = None
     wake_time: str | None = None
     duration_min: int

@@ -45,10 +45,26 @@ EXERCISES = [
 
 def migrate():
     """Migrations légères pour les bases créées par une version précédente."""
-    cols = {c["name"] for c in inspect(engine).get_columns("sleep_entries")}
-    if "awakenings" not in cols:
-        with engine.begin() as conn:
+    insp = inspect(engine)
+    cols = {c["name"] for c in insp.get_columns("sleep_entries")}
+    with engine.begin() as conn:
+        if "awakenings" not in cols:
             conn.execute(text("ALTER TABLE sleep_entries ADD COLUMN awakenings INTEGER"))
+        if "kind" not in cols:
+            conn.execute(text("ALTER TABLE sleep_entries ADD COLUMN kind VARCHAR(10) NOT NULL DEFAULT 'night'"))
+    # Ancienne contrainte UNIQUE(date) : empêche une sieste le jour d'une nuit → on reconstruit la table.
+    if any(set(u["column_names"]) == {"date"} for u in insp.get_unique_constraints("sleep_entries")) or any(
+        i["unique"] and i["column_names"] == ["date"] for i in insp.get_indexes("sleep_entries")
+    ):
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE sleep_entries RENAME TO sleep_entries_old"))
+            for idx in inspect(conn).get_indexes("sleep_entries_old"):
+                conn.execute(text(f'DROP INDEX IF EXISTS "{idx["name"]}"'))
+        SleepEntry.__table__.create(engine)
+        with engine.begin() as conn:
+            names = ", ".join(c.name for c in SleepEntry.__table__.columns)
+            conn.execute(text(f"INSERT INTO sleep_entries ({names}) SELECT {names} FROM sleep_entries_old"))
+            conn.execute(text("DROP TABLE sleep_entries_old"))
 
 
 def init_db():
@@ -93,6 +109,9 @@ def seed_demo():
                         duration_min=ps.duration_min + random.randint(-5, 5), distance_km=dist,
                         avg_hr=random.randint(130, 165) if ps.category in ("footing", "fractionne") else None,
                         rpe={"faible": 3, "moderee": 6, "elevee": 8}[ps.intensity] + random.randint(-1, 1)))
+            if random.random() < 0.2:
+                nap = random.choice([20, 25, 30, 55])
+                db.add(SleepEntry(date=d, kind="nap", duration_min=nap, bedtime="14:00", wake_time=f"14:{nap:02d}"))
             dur = random.randint(370, 520)
             db.add(SleepEntry(date=d, duration_min=dur, bedtime=f"{random.choice([22, 23, 23, 0]):02d}:{random.choice([0, 15, 30, 45]):02d}",
                               wake_time="07:30", quality=random.randint(2, 5), deep_min=int(dur * .18),

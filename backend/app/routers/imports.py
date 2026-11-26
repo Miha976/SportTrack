@@ -44,7 +44,10 @@ async def import_sleep(file: UploadFile = File(...), db: Session = Depends(get_d
     for r in rows:
         if not r.get("duration_min"):
             continue
-        e = db.scalar(select(SleepEntry).where(SleepEntry.date == r["date"])) or SleepEntry()
+        e = None
+        if r["kind"] == "night":
+            e = db.scalar(select(SleepEntry).where(SleepEntry.date == r["date"], SleepEntry.kind == "night"))
+        e = e or SleepEntry()
         for k, v in r.items():
             setattr(e, k, v)
         e.source = "csv"

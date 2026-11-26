@@ -31,8 +31,10 @@ def sessions_between(db: Session, start: date, end: date) -> list[WorkoutSession
     return list(db.scalars(q))
 
 
-def sleep_between(db: Session, start: date, end: date) -> list[SleepEntry]:
-    q = select(SleepEntry).where(SleepEntry.date >= start, SleepEntry.date <= end).order_by(SleepEntry.date)
+def sleep_between(db: Session, start: date, end: date, kind: str = "night") -> list[SleepEntry]:
+    """Nuits par défaut : les siestes ne doivent pas fausser durée moyenne, score de forme, objectifs."""
+    q = select(SleepEntry).where(SleepEntry.date >= start, SleepEntry.date <= end, SleepEntry.kind == kind) \
+        .order_by(SleepEntry.date)
     return list(db.scalars(q))
 
 

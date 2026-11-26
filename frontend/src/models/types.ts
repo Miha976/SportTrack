@@ -132,8 +132,12 @@ export interface Workout extends WorkoutInput {
   load: number
 }
 
+export type SleepKind = 'night' | 'nap'
+
 export interface SleepInput {
   date: ISODate
+  /** Ancienne donnée sans champ = nuit. */
+  kind: SleepKind
   bedtime: string | null
   wake_time: string | null
   duration_min: number

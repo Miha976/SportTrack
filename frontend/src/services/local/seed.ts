@@ -83,8 +83,12 @@ export function demoState(): State {
       }))
     }
     const dur = int(370, 520)
+    if (rand() < 0.2) {
+      const len = pick([20, 25, 30, 55])
+      sleep.push({ id: nid(), date: d, kind: 'nap', duration_min: len, bedtime: '14:00', wake_time: `14:${pad(len)}`, quality: null, deep_min: null, rem_min: null, light_min: null, awake_min: null, awakenings: null, resting_hr: null, hrv_ms: null, source: 'demo' })
+    }
     sleep.push({
-      id: nid(), date: d, duration_min: dur, bedtime: `${pad(pick([22, 23, 23, 0]))}:${pad(pick([0, 15, 30, 45]))}`, wake_time: '07:30',
+      id: nid(), date: d, kind: 'night', duration_min: dur, bedtime: `${pad(pick([22, 23, 23, 0]))}:${pad(pick([0, 15, 30, 45]))}`, wake_time: '07:30',
       quality: int(2, 5), deep_min: Math.trunc(dur * 0.18), rem_min: Math.trunc(dur * 0.22), light_min: Math.trunc(dur * 0.55),
       awake_min: Math.trunc(dur * 0.05), awakenings: pick([0, 0, 1, 1, 2, 3]), resting_hr: int(50, 58), hrv_ms: int(55, 80), source: 'demo',
     })

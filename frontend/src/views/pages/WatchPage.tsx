@@ -61,7 +61,7 @@ export function WatchPage() {
           )}
         </Card>
         <Card title="Sommeil" sub="CSV (export appli montre ou tableur)">
-          <DropZone accept=".csv" onFiles={(f) => f[0] && vm.importSleep(f[0])} icon={<Moon />} label="Importer un CSV de sommeil" hint="Colonnes reconnues : date, bedtime, wake_time, duration_min, quality, deep/rem/light/awake_min, awakenings, resting_hr, hrv_ms" />
+          <DropZone accept=".csv" onFiles={(f) => f[0] && vm.importSleep(f[0])} icon={<Moon />} label="Importer un CSV de sommeil" hint="Colonnes reconnues : date, kind (night/nap), bedtime, wake_time, duration_min, quality, deep/rem/light/awake_min, awakenings, resting_hr, hrv_ms" />
           <div className="row mt between wrap">
             <span className="faint">Séparateur , ou ; · dates AAAA-MM-JJ ou JJ/MM/AAAA</span>
             <button className="btn sm" onClick={vm.downloadTemplate}><Download size={14} /> Modèle CSV</button>

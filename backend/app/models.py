@@ -118,7 +118,9 @@ class WorkoutSession(Base):
 class SleepEntry(Base):
     __tablename__ = "sleep_entries"
     id: Mapped[int] = mapped_column(primary_key=True)
-    date: Mapped[date] = mapped_column(Date, unique=True, index=True)  # date du réveil
+    date: Mapped[date] = mapped_column(Date, index=True)  # date du réveil (nuit) ou du jour (sieste)
+    kind: Mapped[str] = mapped_column(String(10), default="night", server_default="night")  # night | nap
+    # Une seule nuit par date (contrôlé par l'API) ; plusieurs siestes possibles.
     bedtime: Mapped[str | None] = mapped_column(String(5), nullable=True)  # "23:15"
     wake_time: Mapped[str | None] = mapped_column(String(5), nullable=True)
     duration_min: Mapped[int] = mapped_column(Integer)

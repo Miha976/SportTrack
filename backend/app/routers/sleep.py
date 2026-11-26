@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -21,12 +21,28 @@ def list_sleep(start: date | None = None, limit: int = 60, db: Session = Depends
 
 
 @router.post("", response_model=SleepOut, status_code=201)
-def upsert_sleep(body: SleepIn, db: Session = Depends(get_db)):
-    """Une seule nuit par date : la saisie remplace l'existante."""
-    e = db.scalar(select(SleepEntry).where(SleepEntry.date == body.date))
+def create_sleep(body: SleepIn, db: Session = Depends(get_db)):
+    """Nuit : une seule par date (la saisie remplace l'existante). Sieste : toujours ajoutée."""
+    e = None
+    if body.kind == "night":
+        e = db.scalar(select(SleepEntry).where(SleepEntry.date == body.date, SleepEntry.kind == "night"))
     if e is None:
         e = SleepEntry(source="manuel")
         db.add(e)
+    for k, v in body.model_dump().items():
+        setattr(e, k, v)
+    db.commit()
+    return e
+
+
+@router.put("/{eid}", response_model=SleepOut)
+def update_sleep(eid: int, body: SleepIn, db: Session = Depends(get_db)):
+    e = get_or_404(db, SleepEntry, eid)
+    if body.kind == "night":
+        other = db.scalar(select(SleepEntry).where(
+            SleepEntry.date == body.date, SleepEntry.kind == "night", SleepEntry.id != eid))
+        if other:
+            raise HTTPException(409, "Une nuit existe déjà à cette date")
     for k, v in body.model_dump().items():
         setattr(e, k, v)
     db.commit()

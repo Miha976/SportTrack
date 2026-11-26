@@ -161,10 +161,17 @@ export const workoutRepository: typeof Http.workoutRepository = {
 // ------------------------------------------------------------------ Sommeil
 export const sleepRepository: typeof Http.sleepRepository = {
   list: async (limit = 60) => sortDesc(S().sleep).slice(0, limit).map(clone),
-  save: async (s: SleepInput) => {
-    let rec = S().sleep.find((x) => x.date === s.date)
+  save: async (s: SleepInput, id?: number) => {
+    const isNight = (x: SleepEntry) => (x.kind ?? 'night') === 'night'
+    let rec = id !== undefined ? S().sleep.find((x) => x.id === id)
+      : s.kind === 'night' ? S().sleep.find((x) => x.date === s.date && isNight(x)) : undefined
+    if (id !== undefined && !rec) throw notFound('Entrée de sommeil')
+    if (s.kind === 'night' && S().sleep.some((x) => x.date === s.date && isNight(x) && x !== rec)) {
+      throw new Error('Une nuit existe déjà à cette date')
+    }
+    const oldKey = rec ? monthKey('sleep', rec.date) : null
     if (!rec) { rec = { ...clone(s), id: newId(), source: 'manuel' }; S().sleep.push(rec) } else Object.assign(rec, clone(s))
-    await save(monthKey('sleep', s.date))
+    await save(monthKey('sleep', s.date), ...(oldKey ? [oldKey] : []))
     return clone(rec) as SleepEntry
   },
   remove: async (id) => {
@@ -235,7 +242,7 @@ export const importRepository: typeof Http.importRepository = {
     const keys = new Set<string>()
     for (const r of rows) {
       if (!r.duration_min || !/^\d{4}-\d{2}-\d{2}$/.test(r.date)) continue
-      const existing = S().sleep.find((x) => x.date === r.date)
+      const existing = r.kind === 'night' ? S().sleep.find((x) => x.date === r.date && (x.kind ?? 'night') === 'night') : undefined
       if (existing) Object.assign(existing, r, { source: 'csv' })
       else S().sleep.push({ ...r, id: newId(), source: 'csv' })
       keys.add(monthKey('sleep', r.date))

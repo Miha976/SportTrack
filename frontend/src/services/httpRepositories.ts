@@ -39,7 +39,8 @@ export const workoutRepository = {
 
 export const sleepRepository = {
   list: (limit = 60) => http.get<SleepEntry[]>(`/sleep${qs({ limit })}`),
-  save: (s: SleepInput) => http.post<SleepEntry>('/sleep', s),
+  /** Sans id : crée (une nuit existante à la même date est remplacée). Avec id : modifie cette entrée. */
+  save: (s: SleepInput, id?: number) => (id ? http.put<SleepEntry>(`/sleep/${id}`, s) : http.post<SleepEntry>('/sleep', s)),
   remove: (id: number) => http.del(`/sleep/${id}`),
 }
 
